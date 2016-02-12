@@ -161,6 +161,7 @@
 		qcom,mmss-ulp-clamp-ctrl-offset = <0x20>;
 		qcom,mmss-phyreset-ctrl-offset = <0x24>;
 		qcom,timing-db-mode;
+		qcom,dsi-clk-ln-recovery;
 
 		qcom,core-supply-entries {
                         #address-cells = <1>;
@@ -249,6 +250,7 @@
 		qcom,mmss-ulp-clamp-ctrl-offset = <0x20>;
 		qcom,mmss-phyreset-ctrl-offset = <0x24>;
 		qcom,timing-db-mode;
+		qcom,dsi-clk-ln-recovery;
 
 		qcom,core-supply-entries {
 			#address-cells = <1>;

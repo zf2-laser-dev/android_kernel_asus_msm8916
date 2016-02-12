@@ -1,13 +1,12 @@
 ifeq ($(CONFIG_OF),y)
 
 dtb-$(CONFIG_ARCH_MSM8916) += msm8916-mtp-ze550kl.dtb \
-        msm8929-cdp-ze550kl.dtb \
-        msm8929-cdp-ze600kl.dtb \
-        msm8939-cdp-ze550kl.dtb \
-        msm8939-cdp-ze600kl.dtb \
-        msm8939-cdp-zx550kl.dtb \
+	msm8929-cdp-ze550kl.dtb \
+	msm8929-cdp-ze600kl.dtb \
+	msm8939-cdp-ze550kl.dtb \
+	msm8939-cdp-ze600kl.dtb \
+	msm8939-cdp-zx550kl.dtb \
 	msm8939-cdp-zd550kl.dtb
-
 
 DTB_NAMES := $(subst $\",,$(CONFIG_BUILD_ARM_APPENDED_DTB_IMAGE_NAMES))
 ifneq ($(DTB_NAMES),)
