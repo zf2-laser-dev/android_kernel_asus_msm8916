@@ -416,7 +416,7 @@ typedef enum
 #endif
   /*Delete BA Ind*/
   WDI_DEL_BA_IND,
-
+  WDI_LOST_LINK_PARAMS_IND,
   WDI_MAX_IND
 }WDI_LowLevelIndEnumType;
 
@@ -727,6 +727,19 @@ typedef struct
 #endif
 
 
+typedef struct
+{
+  wpt_uint8  bssIdx;
+  wpt_uint8  rssi;
+  wpt_uint8  selfMacAddr[WDI_MAC_ADDR_LEN];
+  wpt_uint32 linkFlCnt;
+  wpt_uint32 linkFlTx;
+  wpt_uint32 lastDataRate;
+  wpt_uint32 rsvd1;
+  wpt_uint32 rsvd2;
+
+}WDI_LostLinkParamsIndType;
+
 /*---------------------------------------------------------------------------
  WDI_IbssPeerInactivityIndType
 -----------------------------------------------------------------------------*/
@@ -933,6 +946,7 @@ typedef struct
     void *pEXTScanIndData;
 #endif
     WDI_DeleteBAIndType         wdiDeleteBAInd;
+    WDI_LostLinkParamsIndType   wdiLostLinkParamsInd;
   }  wdiIndicationData;
 }WDI_LowLevelIndType;
 
@@ -7810,6 +7824,10 @@ typedef void  (*WDI_LLStatsClearRspCb)(void *pEventData,
 
 typedef void  (*WDI_SetSpoofMacAddrRspCb)(
                         WDI_SpoofMacAddrRspParamType* wdiRsp, void *pUserData);
+
+typedef void (*WDI_AntennaDivSelRspCb)(WDI_Status status,
+              void *resp, void *pUserData);
+
 /*========================================================================
  *     Function Declarations and Documentation
  ==========================================================================*/
@@ -11173,8 +11191,43 @@ WDI_SpoofMacAddrInfoType *pWdiReq,
   void*                          pUserData
 );
 
+/**
+ @brief WDI_SetRtsCtsHTVhtInd
+        Set RTS/CTS indication for diff modes.
+
+ @param rtsCtsVal: Bit mask value to enable RTS/CTS for different modes
+
+ @return Result of the function call
+*/
+
+WDI_Status
+WDI_SetRtsCtsHTVhtInd
+(
+  wpt_uint32 rtsCtsVal
+);
+
+
 #ifdef __cplusplus
  }
 #endif 
+
+/**
+ @brief WDI_GetCurrentAntennaIndex
+    This API is called to send getCurretAntennaIndex request to FW
+
+ @param pUserData: pointer to request params
+        wdiAntennaDivSelRspCb     : getCurretAntennaIndex response callback
+        reserved: request parameter
+ @see
+ @return SUCCESS or FAIL
+*/
+WDI_Status
+WDI_GetCurrentAntennaIndex
+(
+  void *pUserData,
+  WDI_AntennaDivSelRspCb wdiAntennaDivSelRspCb,
+  wpt_uint32 reserved
+);
+
 
 #endif /* #ifndef WLAN_QCT_WDI_H */

@@ -1343,21 +1343,31 @@ eHalStatus csrNeighborRoamPrepareScanProfileFilter(tpAniSirGlobal pMac, tCsrScan
 
     pScanFilter->BSSType = pCurProfile->BSSType;
 
-    /* We are intrested only in the scan results on channels that we scanned  */
-    pScanFilter->ChannelInfo.numOfChannels = pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.numOfChannels;
-    pScanFilter->ChannelInfo.ChannelList = vos_mem_malloc(pScanFilter->ChannelInfo.numOfChannels * sizeof(tANI_U8));
-    if (NULL == pScanFilter->ChannelInfo.ChannelList)
+    if (pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.numOfChannels)
     {
-        smsLog(pMac, LOGE, FL("Scan Filter Channel list mem alloc failed"));
-        vos_mem_free(pScanFilter->SSIDs.SSIDList);
-        pScanFilter->SSIDs.SSIDList = NULL;
-        return eHAL_STATUS_FAILED_ALLOC;
+       /* We are intrested only in the scan results on channels that we scanned  */
+       pScanFilter->ChannelInfo.numOfChannels =
+        pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.numOfChannels;
+       pScanFilter->ChannelInfo.ChannelList =
+        vos_mem_malloc(pScanFilter->ChannelInfo.numOfChannels * sizeof(tANI_U8));
+       if (NULL == pScanFilter->ChannelInfo.ChannelList)
+       {
+          smsLog(pMac, LOGE, FL("Scan Filter Channel list mem alloc failed"));
+          vos_mem_free(pScanFilter->SSIDs.SSIDList);
+          pScanFilter->SSIDs.SSIDList = NULL;
+          return eHAL_STATUS_FAILED_ALLOC;
+       }
+       for (i = 0; i < pScanFilter->ChannelInfo.numOfChannels; i++)
+       {
+          pScanFilter->ChannelInfo.ChannelList[i] =
+            pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.ChannelList[i];
+       }
     }
-    for (i = 0; i < pScanFilter->ChannelInfo.numOfChannels; i++)
+    else
     {
-        pScanFilter->ChannelInfo.ChannelList[i] = pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.ChannelList[i];
+       pScanFilter->ChannelInfo.numOfChannels = 0;
+       pScanFilter->ChannelInfo.ChannelList = NULL;
     }
-
 #ifdef WLAN_FEATURE_VOWIFI_11R
     if (pNeighborRoamInfo->is11rAssoc)
     {
@@ -2746,8 +2756,17 @@ eHalStatus csrNeighborRoamScanForInitialForced5GRoaming(tpAniSirGlobal pMac, tAN
     if (eHAL_STATUS_SUCCESS != status)
     {
         smsLog(pMac, LOGE, FL("Forced intial roam to 5Gh request failed: Status = %d"), status);
+        return status;
     }
 
+    //keep firmware shut-up for any roaming related scan during
+    //this tenure.
+    status = csrRoamOffloadScan(pMac, ROAM_SCAN_OFFLOAD_STOP,
+                                REASON_INITIAL_FORCED_ROAM_TO_5G);
+    if (eHAL_STATUS_SUCCESS != status)
+    {
+        smsLog(pMac, LOGE, FL("csrRoamOffloadScan stop scan cmd got failed status = %d"), status);
+    }
     return status;
 }
 #endif
@@ -3046,16 +3065,6 @@ void csrForcedInitialRoamTo5GHTimerCallback(void *context)
     //keep track this scan & roam is due to Forced initial roam to 5GHz
     pNeighborRoamInfo->isForcedInitialRoamTo5GH = 1;
 
-    //keep firmware shut-up for any roaming related scan during
-    //this tenure.
-    status = csrRoamOffloadScan(pMac, ROAM_SCAN_OFFLOAD_STOP,
-                                REASON_INITIAL_FORCED_ROAM_TO_5G);
-    if (eHAL_STATUS_SUCCESS != status)
-    {
-        smsLog(pMac, LOGE, FL("csrRoamOffloadScan stop scan cmd got failed status = %d"), status);
-        return;
-    }
-
     // MUKUL TODO: whatever we are doing should we need to move
     // it after offload scan response comes from firmware ???
     status = csrNeighborRoamTransitToCFGChanScan(pMac);
@@ -3063,8 +3072,6 @@ void csrForcedInitialRoamTo5GHTimerCallback(void *context)
     {
         smsLog(pMac, LOGE,
                FL("csrNeighborRoamTransitToCFGChanScan failed status=%d"), status);
-         //restart scan offload to firmware
-         csrNeighborRoamStartLfrScan(pMac, REASON_INITIAL_FORCED_ROAM_TO_5G);
     }
 }
 
@@ -3786,6 +3793,12 @@ VOS_STATUS csrNeighborRoamTransitToCFGChanScan(tpAniSirGlobal pMac)
                           numOfChannels * sizeof(tANI_U8));
                 outputNumOfChannels = numOfChannels;
             }
+
+            if (outputNumOfChannels == 0)
+            {
+                smsLog(pMac, LOGE, FL("No channels to scan"));
+                return VOS_STATUS_E_FAILURE;
+            }
             currChannelListInfo->ChannelList =
                 vos_mem_malloc(outputNumOfChannels*sizeof(tANI_U8));
             if (NULL == currChannelListInfo->ChannelList)
@@ -3793,6 +3806,7 @@ VOS_STATUS csrNeighborRoamTransitToCFGChanScan(tpAniSirGlobal pMac)
                 smsLog(pMac, LOGE, FL("Memory allocation for Channel list failed"));
                 return VOS_STATUS_E_RESOURCES;
             }
+            currChannelListInfo->numOfChannels = outputNumOfChannels;
             vos_mem_copy(currChannelListInfo->ChannelList,
                   scanChannelList, outputNumOfChannels * sizeof(tANI_U8));
         } 
@@ -3908,12 +3922,18 @@ VOS_STATUS csrNeighborRoamTransitToCFGChanScan(tpAniSirGlobal pMac)
                     outputNumOfChannels = numOfChannels;
                 }
 
+                if (outputNumOfChannels == 0)
+                {
+                    smsLog(pMac, LOGE, FL("No channels to scan"));
+                    return VOS_STATUS_E_FAILURE;
+                }
                 currChannelListInfo->ChannelList = vos_mem_malloc(outputNumOfChannels * sizeof(tANI_U8));
                 if (NULL == currChannelListInfo->ChannelList)
                 {
                     smsLog(pMac, LOGE, FL("Memory allocation for Channel list failed"));
                     return VOS_STATUS_E_RESOURCES;
                 }
+                currChannelListInfo->numOfChannels = outputNumOfChannels;
                 vos_mem_copy(currChannelListInfo->ChannelList,
                         scanChannelList,
                         outputNumOfChannels * sizeof(tANI_U8));
@@ -3972,6 +3992,12 @@ VOS_STATUS csrNeighborRoamTransitToCFGChanScan(tpAniSirGlobal pMac)
             {
                 numOfChannels = WNI_CFG_VALID_CHANNEL_LIST_LEN;
             }
+
+            if (numOfChannels == 0)
+            {
+                smsLog(pMac, LOGE, FL("No channels to scan"));
+                return VOS_STATUS_E_FAILURE;
+            }
             currChannelListInfo->ChannelList =
                 vos_mem_malloc(numOfChannels*sizeof(tANI_U8));
 
@@ -3980,6 +4006,7 @@ VOS_STATUS csrNeighborRoamTransitToCFGChanScan(tpAniSirGlobal pMac)
                 smsLog(pMac, LOGE, FL("Memory allocation for Channel list failed"));
                 return VOS_STATUS_E_RESOURCES;
             }
+            currChannelListInfo->numOfChannels = numOfChannels;
 #ifdef FEATURE_WLAN_LFR
             vos_mem_copy(currChannelListInfo->ChannelList,
                     channelList, numOfChannels * sizeof(tANI_U8));
@@ -3991,8 +4018,6 @@ VOS_STATUS csrNeighborRoamTransitToCFGChanScan(tpAniSirGlobal pMac)
             }
         }
 
-        /* Adjust for the actual number that are used */
-        currChannelListInfo->numOfChannels = numOfChannels;
         NEIGHBOR_ROAM_DEBUG(pMac, LOGW, 
             "Number of channels from CFG (or) (non-)occupied list=%d",
             currChannelListInfo->numOfChannels);

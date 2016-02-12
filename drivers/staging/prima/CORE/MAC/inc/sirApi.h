@@ -1743,6 +1743,15 @@ typedef struct sSirSmeMicFailureInd
     tSirMicFailureInfo     info;
 } tSirSmeMicFailureInd, *tpSirSmeMicFailureInd;
 
+typedef struct sSirSmeLostLinkParamsInd
+{
+    tANI_U16  messageType;
+    tANI_U16  length;
+    tANI_U8 sessionId;
+    tSirLostLinkParamsInfo info;
+} tSirSmeLostLinkParamsInd, *tpSirSmeLostLinkParamsInd;
+
+
 typedef struct sSirSmeMissedBeaconInd
 {
     tANI_U16                    messageType; // eWNI_SME_MISSED_BEACON_IND
@@ -3599,6 +3608,13 @@ typedef struct sSirSmeDelStaSelfRsp
     tSirMacAddr     selfMacAddr;
 }tSirSmeDelStaSelfRsp, *tpSirSmeDelStaSelfRsp;
 
+typedef enum DFSChanScanType
+{
+    DFS_CHNL_SCAN_DISABLED,
+    DFS_CHNL_SCAN_ENABLED_NORMAL,
+    DFS_CHNL_SCAN_ENABLED_ACTIVE
+}eDFSChanScanType;
+
 /* Coex Indication defines - 
    should match WLAN_COEX_IND_DATA_SIZE 
    should match WLAN_COEX_IND_TYPE_DISABLE_HB_MONITOR 
@@ -4782,6 +4798,8 @@ typedef struct sSirChAvoidIndType
 typedef void (*pGetBcnMissRateCB)( tANI_S32 bcnMissRate,
                                    VOS_STATUS status, void *data);
 
+typedef void (*tAntennaDivSelCB)(int antennaId, void *pContext);
+
 typedef PACKED_PRE struct PACKED_POST
 {
    tANI_U32   msgLen;
@@ -4820,6 +4838,26 @@ typedef struct
   u32  statsClearReqMask;
   u8   stopReq;
 }tSirLLStatsClearReq, *tpSirLLStatsClearReq;
+
+typedef PACKED_PRE struct PACKED_POST
+{
+  tANI_U16 status;
+  tANI_U32 selectedAntennaId;
+  tANI_U32 reserved;
+} tSirAntennaDivSelRsp, *tpSirntennaDivSelRsp;
+
+typedef PACKED_PRE struct PACKED_POST
+{
+   tAntennaDivSelCB callback;
+   void *data;
+   tANI_U32 reserved;
+}tSirAntennaDiversitySelectionReq;
+
+typedef PACKED_PRE struct PACKED_POST
+{
+   tAntennaDivSelCB callback;
+   void *data;
+}tSirAntennaDiversitySelectionInfo;
 
 /*---------------------------------------------------------------------------
   WLAN_HAL_LL_NOTIFY_STATS
@@ -5163,6 +5201,8 @@ typedef PACKED_PRE struct PACKED_POST
 
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
+
+
 #ifdef WLAN_FEATURE_EXTSCAN
 
 typedef enum
@@ -5494,5 +5534,12 @@ typedef struct
     tANI_U16       length;
     tSirMacAddr    macAddr;
 } tSirSpoofMacAddrReq, *tpSirSpoofMacAddrReq;
+
+typedef enum eSirAbortScanStatus
+{
+    eSIR_ABORT_ACTIVE_SCAN_LIST_EMPTY,
+    eSIR_ABORT_ACTIVE_SCAN_LIST_NOT_EMPTY,
+    eSIR_ABORT_SCAN_FAILURE
+}tSirAbortScanStatus;
 
 #endif /* __SIR_API_H */
