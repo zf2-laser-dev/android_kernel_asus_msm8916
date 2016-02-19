@@ -1913,7 +1913,7 @@ static int report_vm_bms_soc(struct qpnp_bms_chip *chip)
 			soc_change = min(1, soc_change);
 		}
 
-                        printk("%s:[bms]soc_change = %d\n",__func__,soc_change);
+		printk("%s:[bms]soc_change = %d\n",__func__,soc_change);
 		//if (soc < chip->last_soc && soc != 0)
 		if (soc < chip->last_soc && chip->last_soc != 0)
 			soc = chip->last_soc - soc_change;
@@ -1946,10 +1946,10 @@ static int report_vm_bms_soc(struct qpnp_bms_chip *chip)
 
         //BSP Ben do not report soc which is far too differ from shutdown_soc before boot_completed
         if(boot_completed==0 && (!g_Charger_mode)){
-                printk("%s:[bms]boot_completed not yet\n",__func__);
+                pr_debug("%s:[bms]boot_completed not yet\n",__func__);
                 if(chip->last_soc < 15 && chip->shutdown_soc_invalid ==0){
                         if(abs(chip->last_soc - chip->shutdown_soc) > 3){
-                                printk("%s:[bms]last_soc<%d> and shutdown_soc<%d> difference too large!\n",__func__,chip->last_soc,chip->shutdown_soc);
+                                pr_debug("%s:[bms]last_soc<%d> and shutdown_soc<%d> difference too large!\n",__func__,chip->last_soc,chip->shutdown_soc);
                                 if(chip->last_soc > chip->shutdown_soc)
                                 {
                                       chip->last_soc = chip->shutdown_soc + 3;
@@ -1961,9 +1961,9 @@ static int report_vm_bms_soc(struct qpnp_bms_chip *chip)
                 }
         }
 
-        printk("%s:[bms]before mapping last_soc = <%d>\n",__func__,chip->last_soc);
+        pr_debug("%s:[bms]before mapping last_soc = <%d>\n",__func__,chip->last_soc);
 	result_soc = mapping_for_full_status(chip->last_soc);
-	printk("%s:[bms]Reported result_soc=%d\n",__func__ ,result_soc);
+	pr_debug("%s:[bms]Reported result_soc=%d\n",__func__ ,result_soc);
 	/*
 	 * Backup the actual ocv (last_ocv_uv) and not the
 	 * last_soc-interpolated ocv. This makes sure that
@@ -2473,7 +2473,7 @@ static int qpnp_vm_bms_power_set_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_VOLTAGE_OCV:
 		cancel_delayed_work_sync(&chip->monitor_soc_work);
 		chip->last_ocv_uv = val->intval;
-		printk("%s: last_ocv_uv = %d\n", __FUNCTION__, chip->last_ocv_uv);
+		pr_debug("%s: last_ocv_uv = %d\n", __FUNCTION__, chip->last_ocv_uv);
 		schedule_delayed_work(&chip->monitor_soc_work, 0);
 		break;
 	case POWER_SUPPLY_PROP_HI_POWER:

@@ -33,8 +33,8 @@ extern int setSMB358Charger(int usb_state);
 #define LOW_TEMPERATURE_TO_STOP_CHARGING   (0)
 
 #define BATTERY_TAG "<BATT>"
-#define BAT_DBG(...)  printk(KERN_INFO BATTERY_TAG __VA_ARGS__)
-#define BAT_DBG_L(level, ...)  printk(level BATTERY_TAG __VA_ARGS__)
+#define BAT_DBG(...)  pr_debug(KERN_INFO BATTERY_TAG __VA_ARGS__)
+#define BAT_DBG_L(level, ...)  pr_debug(level BATTERY_TAG __VA_ARGS__)
 #define BAT_DBG_E(...)  printk(KERN_ERR BATTERY_TAG __VA_ARGS__)
 
 #define BYTETOBINARYPATTERN "%d%d%d%d-%d%d%d%db"
