@@ -575,11 +575,9 @@ static bool is_holding_power_key(void)
 }
 
 #include <linux/reboot.h>
-#include <linux/asus_global.h>
 #include <asm/uaccess.h>
 #include <linux/fs.h>
 #define DEV_VIBRATOR "/sys/class/timed_output/vibrator/enable"
-extern struct _asus_global asus_global;
 void set_vib_enable(int value)
 {
 	char timeout_ms[5];
@@ -637,14 +635,9 @@ void wait_for_power_key_6s_work(struct work_struct *work)
 				time_after_eq(jiffies, timeout)) &&
 				(is_holding_power_key()) && (i > 0)) {
 			duration = (jiffies - startime)*10/HZ;
-			//ASUSEvtlog("ASDF: reset device after power press %d.%d sec (%d)\n",
-			//		duration/10, duration%10, i);
 			set_vib_enable(200);
 			msleep(200);
 
-			asus_global.ramdump_enable_magic = 0;
-			printk(KERN_CRIT "asus_global.ramdump_enable_magic = 0x%x\n",
-					asus_global.ramdump_enable_magic);
 			printk("force reset device!!\n");
 			kernel_restart("asdf");
 		}
@@ -775,7 +768,6 @@ static int pwrkeyMode_function(const char *val, struct kernel_param *kp)
 module_param_call(pwrkey_mode, pwrkeyMode_function, param_get_int, &pwrkey_mode, 0644);
 /////COBB -- : for keypad test/////
 
-extern int boot_after_60sec;
 static int
 qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 {
@@ -810,21 +802,11 @@ qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 		pon_rt_bit = QPNP_PON_KPDPWR_N_SET;
 		/* for phone hang debug */
 		pon_for_powerkey = pon;
-		if (boot_after_60sec) {
-			if (is_holding_power_key()) {
-				press_time = jiffies;
-				//<remove before debug ok> schedule_work(&__wait_for_slowlog_work);
-				schedule_work(&__wait_for_power_key_6s_work);
-			} else {
-				press_time = 0xFFFFFFFF;
-			}
-		}else{
-			if (is_holding_power_key()) {
-				press_time = jiffies;
-				schedule_work(&__wait_for_power_key_6s_reboot_work);
-			} else {
-				press_time = 0xFFFFFFFF;
-			}
+		if (is_holding_power_key()) {
+			press_time = jiffies;
+			schedule_work(&__wait_for_power_key_6s_reboot_work);
+		} else {
+			press_time = 0xFFFFFFFF;
 		}
 		break;
 	case PON_RESIN:
@@ -1810,14 +1792,12 @@ static int qpnp_pon_probe(struct spmi_device *spmi)
 		dev_info(&pon->spmi->dev,
 			"PMIC@SID%d Power-on reason: Unknown and '%s' boot\n",
 			pon->spmi->sid, cold_boot ? "cold" : "warm");
-		ASUSEvtlog("Bootup Reason: Unknown and '%s' boot\n", cold_boot ? "cold" : "warm");
 	} else {
 		pon->pon_trigger_reason = index;
 		dev_info(&pon->spmi->dev,
 			"PMIC@SID%d Power-on reason: %s and '%s' boot\n",
 			pon->spmi->sid, qpnp_pon_reason[index],
 			cold_boot ? "cold" : "warm");
-		ASUSEvtlog("Bootup Reason: %s and '%s' boot\n", qpnp_pon_reason[index], cold_boot ? "cold" : "warm");
 	}
 
 	/* POFF reason */

@@ -3000,14 +3000,10 @@ wcnss_trigger_config(struct platform_device *pdev)
 		penv->pil = subsystem_get(WCNSS_PIL_DEVICE);
 		if (IS_ERR(penv->pil)) {
 			dev_err(&pdev->dev, "Peripheral Loader failed on WCNSS.\n");
-			ASUSEvtlog("[wcnss]: Load WCNSS failed.\n");
 			ret = PTR_ERR(penv->pil);
 			wcnss_disable_pc_add_req();
 			wcnss_pronto_log_debug_regs();
 		}
-		//else {
-		//	ASUSEvtlog("[wcnss]: Load WCNSS image ok.\n");
-		//}
 	} while (pil_retry++ < WCNSS_MAX_PIL_RETRY && IS_ERR(penv->pil));
 
 	if (IS_ERR(penv->pil)) {

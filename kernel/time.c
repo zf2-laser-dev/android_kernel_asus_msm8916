@@ -191,21 +191,7 @@ int do_sys_settimeofday(const struct timespec *tv, const struct timezone *tz)
 	getnstimeofday(&tmp_time);
 	tmp_time.tv_sec -=sys_tz.tz_minuteswest*60;
 	rtc_time_to_tm(tmp_time.tv_sec,&new_time);
-	ASUSEvtlog("[UTS] RTC update: Current Datetime: %04d-%02d-%02d %02d:%02d:%02d,Update Datetime: %04d-%02d-%02d %02d:%02d:%02d\r\n",
-			ori_time.tm_year+1900,
-			ori_time.tm_mon+1,
-			ori_time.tm_mday,
-			ori_time.tm_hour,
-			ori_time.tm_min,
-			ori_time.tm_sec,
-			new_time.tm_year+1900,
-			new_time.tm_mon+1,
-			new_time.tm_mday,
-			new_time.tm_hour,
-			new_time.tm_min,
-			new_time.tm_sec);
 
-	
 	if (tv)
 		return do_settimeofday(tv);
 	return 0;

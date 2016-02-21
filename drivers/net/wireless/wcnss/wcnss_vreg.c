@@ -24,7 +24,6 @@
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <linux/clk.h>
-#include <linux/asusdebug.h>
 #include <soc/qcom/socinfo.h>
 
 static void __iomem *msm_wcnss_base;
@@ -640,41 +639,27 @@ int wcnss_wlan_power(struct device *dev,
 		/* RIVA regulator settings */
 		rc = wcnss_core_vregs_on(dev, hw_type,
 			cfg->is_pronto_vt);
-		if (rc){
-			ASUSEvtlog("[wcnss]: wcnss_core_vregs_on fail.\n");
+		if (rc)
 			goto fail_wcnss_on;
-		}else{
-			//ASUSEvtlog("[wcnss]: wcnss_core_vregs_on.\n");
-		}
 		/* IRIS regulator settings */
 		rc = wcnss_iris_vregs_on(dev, hw_type,
 			cfg->is_pronto_vt);
-		if (rc){
-			ASUSEvtlog("[wcnss]: wcnss_iris_vregs_on fail.\n");
+		if (rc)
 			goto fail_iris_on;
-		}else {
-			//ASUSEvtlog("[wcnss]: wcnss_iris_vregs_on.\n");
-        	}
 		/* Configure IRIS XO */
 		rc = configure_iris_xo(dev, cfg,
 				WCNSS_WLAN_SWITCH_ON, iris_xo_set);
-		if (rc){
-			ASUSEvtlog("[wcnss]: configure_iris_xo WCNSS_WLAN_SWITCH_ON fail.\n");
+		if (rc)
 			goto fail_iris_xo;
-		}else {
-			//ASUSEvtlog("[wcnss]: configure_iris_xo WCNSS_WLAN_SWITCH_ON.\n");
-        	}
+
 		is_power_on = true;
 
 	}  else if (is_power_on) {
 		is_power_on = false;
 		configure_iris_xo(dev, cfg,
 				WCNSS_WLAN_SWITCH_OFF, NULL);
-		//ASUSEvtlog("[wcnss]: configure_iris_xo WCNSS_WLAN_SWITCH_OFF.\n");
 		wcnss_iris_vregs_off(hw_type, cfg->is_pronto_vt);
-		//ASUSEvtlog("[wcnss]: wcnss_iris_vregs_off.\n");
 		wcnss_core_vregs_off(hw_type, cfg->is_pronto_vt);
-		//ASUSEvtlog("[wcnss]: wcnss_core_vregs_off.\n");
 	}
 
 	up(&wcnss_power_on_lock);
