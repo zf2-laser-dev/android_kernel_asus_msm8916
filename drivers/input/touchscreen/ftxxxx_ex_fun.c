@@ -114,15 +114,9 @@ static unsigned char *CTPM_FW = NULL;
 static int CTPM_FW_length = 0;
 
 /*ASUS_BSP Jacob : setting priority +++ */
-#ifdef ASUS_FACTORY_BUILD
-#define Focal_RW_ATTR (S_IRUGO | S_IWUGO)
-#define Focal_WO_ATTR (S_IWUGO)
-#define Focal_RO_ATTR (S_IRUGO)
-#else
 #define Focal_RW_ATTR (S_IRUGO|S_IWUSR)
 #define Focal_WO_ATTR (S_IWUSR | S_IWGRP)
 #define Focal_RO_ATTR (S_IRUGO)
-#endif
 /*ASUS_BSP Jacob : setting priority --- */
 #define FTS_SELF_TEST
 extern int focal_init_success;
@@ -1452,18 +1446,6 @@ static ssize_t switch_keypad_mode_show(struct device *dev, struct device_attribu
 	return sprintf(buf, "%d\n", ftxxxx_ts->keypad_mode_enable);
 }
 
-#ifdef ASUS_FACTORY_BUILD
-static ssize_t flip_cover_mode_show(struct device *dev, struct device_attribute *attr, char *buf)
-{
-	return sprintf(buf, "%d\n", 0);
-}
-
-static ssize_t flip_cover_mode_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
-{
-	return count;
-}
-
-#else
 static ssize_t flip_cover_mode_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
 	return sprintf(buf, "%d\n", ftxxxx_ts->cover_mode_states);
@@ -1496,10 +1478,6 @@ static ssize_t flip_cover_mode_store(struct device *dev, struct device_attribute
 	return count;
 	
 }
-
-#endif
-
-
 
 static ssize_t irq_disable_store(struct device *dev, struct device_attribute *attr, const char *buf, size_t count)
 {

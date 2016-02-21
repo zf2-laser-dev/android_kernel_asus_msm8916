@@ -251,7 +251,6 @@ static int Thermal_Policy_ze550(int *thermal_policy_current);
 extern int Thermal_Level;
 static int Thermal_Level_old=0;
 /*factory*/
-//#define ASUS_FACTORY_BUILD
 bool Batt_ID_reday = false;
 bool Batt_ID_ERROR=false;
 extern bool thermal_abnormal;
@@ -272,12 +271,6 @@ struct smb358_regulator {
 	struct regulator_dev	*rdev;
 };
 
-#if defined(ASUS_FACTORY_BUILD)
-bool eng_charging_limit;
-bool g_charging_toggle_for_charging_limit;
-bool charger_suspend_for_charging_limit;	
-int charger_limit_setting;
-#endif
 /*********************************************
  *******Project Oriented Function List********
  *********************************************
@@ -2234,54 +2227,6 @@ int smb358_soc_control_jeita(void)
 	return ret;
 }
 
-#if defined(ASUS_FACTORY_BUILD)
-static bool asus_battery_charging_limit(void)
-{
-	//int recharging_soc = 59;
-	//int discharging_soc = 60;
-	int percentage;
-	int recharging_soc=charger_limit_setting-1;
-	int discharging_soc=charger_limit_setting;
-
-	BAT_DBG("%s,charger_limit_setting=%d\n",__FUNCTION__,charger_limit_setting);
-	if (get_battery_rsoc(&percentage)) {
-		BAT_DBG_E(" %s: * fail to get battery rsoc *\n", __func__);
-		g_charging_toggle_for_charging_limit = true;
-		charger_suspend_for_charging_limit=false;
-	} else{
-		if (eng_charging_limit) {
-			/*BSP david: enable charging when soc <= recharging soc*/
-			if (percentage <= recharging_soc) {
-				BAT_DBG("%s, soc: %d <= recharging soc: %d , enable charging\n", __FUNCTION__, percentage, recharging_soc);
-				g_charging_toggle_for_charging_limit = true;
-				charger_suspend_for_charging_limit=false;				
-				BAT_DBG("%s, soc: %d <= recharging soc: %d , charger not suspend\n",
-					__FUNCTION__, percentage, recharging_soc);
-			/*BSP david: disable charging when soc >= discharging soc*/
-			} else if (percentage >= discharging_soc) {
-				BAT_DBG("%s, soc: %d >= discharging soc: %d , disable charging\n", __FUNCTION__, percentage, discharging_soc);
-				g_charging_toggle_for_charging_limit = false;
-				if(percentage==discharging_soc){	
-			      charger_suspend_for_charging_limit=false;	
-			      BAT_DBG("%s, soc: %d == discharging soc: %d , charger not suspend\n", __FUNCTION__, percentage, discharging_soc);	
-			       }else{	
-			       charger_suspend_for_charging_limit=true;	
-			       BAT_DBG("%s, soc: %d > discharging soc: %d , charger suspend\n", __FUNCTION__, percentage, discharging_soc);	
-			       }
-			} else{
-				BAT_DBG("%s, soc: %d, between %d and %d, maintain original charging toggle:%d\n", __FUNCTION__, percentage, recharging_soc, discharging_soc, g_charging_toggle_for_charging_limit);
-			}
-		} else{
-			BAT_DBG("%s, charging limit disable, enable charging!\n", __FUNCTION__);
-			g_charging_toggle_for_charging_limit = true;
-			charger_suspend_for_charging_limit = false;
-			BAT_DBG("%s, charging limit disable, charger not suspend!\n", __FUNCTION__);
-		}
-	}
-	return g_charging_toggle_for_charging_limit;
-}
-#endif
-
 static int __smb358_path_suspend(struct smb358_charger *chip,bool suspend)
 {
 	int rc;
@@ -2341,17 +2286,6 @@ int smb358_charger_control_jeita(void)
 		BAT_DBG_E("fail to set Soft Cold Temp Limit to Charge Current Compensation ret=%d\n", ret);
 		return ret;
 	}
-
-#if defined(ASUS_FACTORY_BUILD)
-	/*BSP david: do 5060 when FACTORY BUILD defined*/
-	__smb358_path_suspend(smb358_dev,charger_suspend_for_charging_limit);
-	if (charging_enable) {
-		charging_enable = asus_battery_charging_limit();
-		}
-	else{
-		BAT_DBG_E("%s: charging disabled by JEITA!\n", __FUNCTION__);
-		}
-#endif
 
 	if(asus_PRJ_ID==ASUS_ZD550KL||asus_PRJ_ID==ASUS_ZE600KL){
                 ret = smb358_charging_toggle_zd550_ze600(JEITA, charging_enable);
@@ -2608,15 +2542,7 @@ static int smb358_soc_detect_batt_tempr(int usb_state)
 		BAT_DBG("%s: wrong state!\n", __FUNCTION__);
 		break;
 	}
-	
-#if defined(ASUS_FACTORY_BUILD)
-	/*BSP david: do 5060 when FACTORY BUILD defined*/
-	if (charging_enable) {
-		charging_enable = asus_battery_charging_limit();
-	} else{
-		BAT_DBG_E("%s: charging disabled by JEITA!\n", __FUNCTION__);
-	}
-#endif
+
 	/*do set reg value after depend on above decision*/	
 	/*Set Vchg*/
 	ret = smb358_masked_write(smb358_dev, VFLOAT_REG, FLOAT_VOLTAGE_MASK,
@@ -2829,15 +2755,7 @@ static int smb358_soc_detect_batt_tempr_ze550(int usb_state)
 		BAT_DBG("%s: wrong state!\n", __FUNCTION__);
 		break;
 	}
-	
-#if defined(ASUS_FACTORY_BUILD)
-	/*BSP david: do 5060 when FACTORY BUILD defined*/
-	if (charging_enable) {
-		charging_enable = asus_battery_charging_limit();
-	} else{
-		BAT_DBG_E("%s: charging disabled by JEITA!\n", __FUNCTION__);
-	}
-#endif
+
 	/*do set reg value after depend on above decision*/	
 	/*Set Vchg*/
 	ret = smb358_masked_write(smb358_dev, VFLOAT_REG, FLOAT_VOLTAGE_MASK,
@@ -3065,15 +2983,7 @@ static int smb358_soc_detect_batt_tempr_zd550_ze600(int usb_state)
 		BAT_DBG("%s: wrong state!\n", __FUNCTION__);
 		break;
 	}
-	
-#if defined(ASUS_FACTORY_BUILD)
-	/*BSP david: do 5060 when FACTORY BUILD defined*/
-	if (charging_enable) {
-		charging_enable = asus_battery_charging_limit();
-	} else{
-		BAT_DBG_E("%s: charging disabled by JEITA!\n", __FUNCTION__);
-	}
-#endif
+
 	/*do set reg value after depend on above decision*/	
 	/*Set Vchg*/
 	ret = smb358_masked_write(smb358_dev, VFLOAT_REG, FLOAT_VOLTAGE_MASK,
@@ -3302,15 +3212,7 @@ static int smb358_soc_detect_batt_tempr_5wBZsku_zd550(int usb_state)
 		BAT_DBG("%s: wrong state!\n", __FUNCTION__);
 		break;
 	}
-	
-#if defined(ASUS_FACTORY_BUILD)
-	/*BSP david: do 5060 when FACTORY BUILD defined*/
-	if (charging_enable) {
-		charging_enable = asus_battery_charging_limit();
-	} else{
-		BAT_DBG_E("%s: charging disabled by JEITA!\n", __FUNCTION__);
-	}
-#endif
+
 	/*do set reg value after depend on above decision*/	
 	/*Set Vchg*/
 	ret = smb358_masked_write(smb358_dev, VFLOAT_REG, FLOAT_VOLTAGE_MASK,
@@ -4458,218 +4360,6 @@ void static create_chargerIC_status_proc_file(void)
 	}
 }
 
-#if defined(ASUS_FACTORY_BUILD)
-#define	batt_current_PROC_FILE	"batt_current_now"
-static struct proc_dir_entry *batt_current_proc_file;
-static int batt_current_proc_read(struct seq_file *buf, void *v)
-{
-	int ret = -1;
-	struct power_supply *psy;
-	union power_supply_propval val;
-	int current_now=0;
-
-	psy = get_psy_battery();
-	ret = psy->get_property(psy, POWER_SUPPLY_PROP_CURRENT_NOW, &val);
-	if (!ret) {
-		current_now = val.intval / 1000;
-		current_now=-current_now;
-		seq_printf(buf, "%d\n", current_now);
-	} else{
-		BAT_DBG_E("%s: can't get current_now, ret = %d!\n", __FUNCTION__, ret);
-		current_now = ret;
-	}
-
-	return 0;
-}
-
-static int batt_current_proc_open(struct inode *inode, struct  file *file)
-{
-    return single_open(file, batt_current_proc_read, NULL);
-}
-
-static ssize_t batt_current_proc_write(struct file *filp, const char __user *buff,
-		size_t len, loff_t *data)
-{
-	int val;
-
-	char messages[256];
-
-	if (len > 256) {
-		len = 256;
-	}
-
-	if (copy_from_user(messages, buff, len)) {
-		return -EFAULT;
-	}
-
-	val = (int)simple_strtol(messages, NULL, 10);
-	printk("[BAT][CHG][SMB][Proc]batt_current Proc File: %d\n", val);
-
-	return len;
-}
-
-static const struct file_operations batt_current_fops = {
-	.owner = THIS_MODULE,
-	.open = batt_current_proc_open,
-	.write = batt_current_proc_write,
-	.read = seq_read,
-	.release = single_release,
-};
-void static create_batt_current_proc_file(void)
-{
-	batt_current_proc_file = proc_create(batt_current_PROC_FILE, 0644, NULL, &batt_current_fops);
-
-	if (batt_current_proc_file) {
-		BAT_DBG("[Proc]%s sucessed!\n", __FUNCTION__);
-	} else{
-		BAT_DBG("[Proc]%s failed!\n", __FUNCTION__);
-	}
-}
-
-
-#define	batt_voltage_PROC_FILE	"batt_voltage_now"
-static struct proc_dir_entry *batt_voltage_proc_file;
-static int batt_voltage_proc_read(struct seq_file *buf, void *v)
-{
-	int ret = -1;
-	struct power_supply *psy;
-	union power_supply_propval val;
-	int voltage_now=0;
-
-	psy = get_psy_battery();
-	ret = psy->get_property(psy, POWER_SUPPLY_PROP_VOLTAGE_NOW, &val);
-	if (!ret) {
-		voltage_now = val.intval / 1000;
-		seq_printf(buf, "%d\n", voltage_now);
-	} else{
-		BAT_DBG_E("%s: can't get voltage_now, ret = %d!\n", __FUNCTION__, ret);
-		voltage_now = ret;
-	}
-
-	return 0;
-}
-
-static int batt_voltage_proc_open(struct inode *inode, struct  file *file)
-{
-    return single_open(file, batt_voltage_proc_read, NULL);
-}
-
-static ssize_t batt_voltage_proc_write(struct file *filp, const char __user *buff,
-		size_t len, loff_t *data)
-{
-	int val;
-
-	char messages[256];
-
-	if (len > 256) {
-		len = 256;
-	}
-
-	if (copy_from_user(messages, buff, len)) {
-		return -EFAULT;
-	}
-
-	val = (int)simple_strtol(messages, NULL, 10);
-	printk("[BAT][CHG][SMB][Proc]batt_voltage Proc File: %d\n", val);
-
-	return len;
-}
-
-static const struct file_operations batt_voltage_fops = {
-	.owner = THIS_MODULE,
-	.open = batt_voltage_proc_open,
-	.write = batt_voltage_proc_write,
-	.read = seq_read,
-	.release = single_release,
-};
-void static create_batt_voltage_proc_file(void)
-{
-	batt_voltage_proc_file = proc_create(batt_voltage_PROC_FILE, 0644, NULL, &batt_voltage_fops);
-
-	if (batt_voltage_proc_file) {
-		BAT_DBG("[Proc]%s sucessed!\n", __FUNCTION__);
-	} else{
-		BAT_DBG("[Proc]%s failed!\n", __FUNCTION__);
-	}
-}
-
-
-/*---BSP David BMMI Adb Interface---*/
-/*+++BSP David proc charger_limit_enable Interface+++*/
-static int charger_limit_enable_proc_read(struct seq_file *buf, void *v)
-{
-	if (eng_charging_limit) {
-		seq_printf(buf, "charging limit enable\n");
-	} else{
-		seq_printf(buf, "charging limit disable\n");
-	}
-	return 0;
-}
-
-static ssize_t charger_limit_enable_proc_write(struct file *filp, const char __user *buff,
-		size_t len, loff_t *data)
-{
-	char messages[256];
-
-	if (len > 256) {
-		len = 256;
-	}
-
-	if (copy_from_user(messages, buff, len)) {
-		return -EFAULT;
-	}
-
-	if (buff[0] == '1') {
-		eng_charging_limit = true;
-		g_charging_toggle_for_charging_limit = true;
-		charger_suspend_for_charging_limit = false;
-		/* turn on charging limit in eng mode */
-		printk("[BAT][CHG][SMB][Proc]charger_limit_enable:%d\n", 1);
-	} else if (buff[0] == '0') {
-		eng_charging_limit = false;
-		g_charging_toggle_for_charging_limit = true;
-		charger_suspend_for_charging_limit = false;
-		/* turn off charging limit in eng mode */
-		printk("[BAT][CHG][SMB][Proc]charger_limit_enable:%d\n", 0);
-	}
-
-	//kerwin for charger limit
-	sscanf(buff,"%s %d",messages,&charger_limit_setting);
-	if(charger_limit_setting<10)
-		charger_limit_setting=10;
-	else if(charger_limit_setting>100)
-		charger_limit_setting=100;
-	printk("[BAT][CHG][SMB][Proc]charger_limit_setting:%d\n", charger_limit_setting);
-	smb358_update_aicl_work(0);
-	return len;
-}
-
-static int charger_limit_enable_proc_open(struct inode *inode, struct  file *file)
-{
-    return single_open(file, charger_limit_enable_proc_read, NULL);
-}
-
-static const struct file_operations charger_limit_enable_fops = {
-	.owner = THIS_MODULE,
-	.open =  charger_limit_enable_proc_open,
-	.write = charger_limit_enable_proc_write,
-	.read = seq_read,
-	.release = single_release,
-};
-
-static void create_charger_limit_enable_proc_file(void)
-{
-	struct proc_dir_entry *charger_limit_enable_proc_file = proc_create("driver/charger_limit_enable", 0666, NULL, &charger_limit_enable_fops);
-
-	if (charger_limit_enable_proc_file) {
-		printk("[BAT][CHG][SMB][Proc]charger_limit_enable create ok!\n");
-	} else{
-		printk("[BAT][CHG][SMB][Proc]charger_limit_enable create failed!\n");
-	}
-	return;
-}
-/*---BSP David proc charger_limit_enable Interface---*/
-#endif
 static int smb358_charger_probe(struct i2c_client *client,
 				const struct i2c_device_id *id)
 {
@@ -4748,15 +4438,6 @@ static int smb358_charger_probe(struct i2c_client *client,
 //              1 = 10w
         printk("%s:ADAPTER_ID=<%d>\n",__func__,asus_project_ADAPTER_ID);
 
-#if defined(ASUS_FACTORY_BUILD)
-	eng_charging_limit = false;
-	g_charging_toggle_for_charging_limit = true;
-	charger_suspend_for_charging_limit=false;
-	charger_limit_setting=60;
-	create_charger_limit_enable_proc_file();
-	create_batt_current_proc_file();
-	create_batt_voltage_proc_file();
-#endif
 	create_ChargerRegDump_proc_file();
 	create_chargerIC_status_proc_file();
 	create_battID_read_proc_file();

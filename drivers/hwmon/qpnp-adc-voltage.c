@@ -2133,25 +2133,6 @@ static int qpnp_vadc_probe(struct spmi_device *spmi)
 		dev_err(&spmi->dev, "failed to initialize qpnp hwmon adc\n");
 		return rc;
 	}
-#if defined(ASUS_FACTORY_BUILD)//jevian ++
-	fac_qpnp_vadc_dev = spmi->dev;
-	if(proc_create("fac_xo_therm", 0777, NULL, &fac_xo_therm_fops)==NULL)
-	{
-		printk(KERN_ERR"create fac_xo_therm inode is error\n");
-	}
-	if(proc_create("fac_pa_therm0", 0777, NULL, &fac_pa_therm0_fops)==NULL)
-	{
-		printk(KERN_ERR"create fac_pa_therm0 inode is error\n");
-	}
-	if(proc_create("fac_printklog", 0777, NULL, &printklog_fops)==NULL)
-	{
-		printk(KERN_ERR"create printklog node is error\n");
-	}
-	if(proc_create("fac_tool_node", 0777, NULL, &fac_tool_node_fops)==NULL)
-	{
-		printk(KERN_ERR"create fac_tool_node is error\n");
-	}
-#endif//jevian --
 	vadc->vadc_hwmon = hwmon_device_register(&vadc->adc->spmi->dev);
 	vadc->vadc_init_calib = false;
 	vadc->max_channels_available = count_adc_channel_list;

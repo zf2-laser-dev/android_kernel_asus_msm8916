@@ -56,11 +56,7 @@ void read_tcon_cabc(char *rbuf);
 static struct mutex cmd_mutex;
 static char ctrl_display[2] = {0x53, 0x24};
 
-#ifndef ASUS_FACTORY_BUILD
 static char cabc_mode[2] = {0x55, Still_MODE};
-#else
-static char cabc_mode[2] = {0x55, OFF_MODE};
-#endif
 
 static char read_cabc_mode[1] = {0x56};
 static int balance_mode =1;
@@ -1433,12 +1429,8 @@ static int mdss_dsi_parse_panel_features(struct device_node *np,
 		"qcom,ulps-enabled");
 	pr_info("%s: ulps feature %s\n", __func__,
 		(pinfo->ulps_feature_enabled ? "enabled" : "disabled"));
-#ifndef ASUS_FACTORY_BUILD
 	pinfo->esd_check_enabled = of_property_read_bool(np,
 		"qcom,esd-check-enabled");
-#else
-	pinfo->esd_check_enabled = false;
-#endif
 	pinfo->ulps_suspend_enabled = of_property_read_bool(np,
 		"qcom,suspend-ulps-enabled");
 	pr_info("%s: ulps during suspend feature %s", __func__,

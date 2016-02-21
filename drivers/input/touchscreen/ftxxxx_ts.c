@@ -61,12 +61,8 @@
 #define SYSFS_DEBUG
 /*#define FTS_APK_DEBUG		not support now*/
 #define FTS_PM
-#define FTS_CTL_IIC 
-#ifdef ASUS_FACTORY_BUILD
-
-#else
+#define FTS_CTL_IIC
 #define FTS_GESTRUE
-#endif
 /*#define FTXXXX_ENABLE_IRQ*/
 
 /*#define CONFIG_PM*/
