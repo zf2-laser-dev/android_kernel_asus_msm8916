@@ -52,8 +52,6 @@
 
 #define WCD_MBHC_DEF_RLOADS 5
 
-int g_gpio_audio_debug;/*steve_chen ++*/
-
 static int msm_btsco_rate = BTSCO_RATE_8KHZ;
 static int msm_btsco_ch = 1;
 
@@ -2256,14 +2254,6 @@ static int msm8x16_setup_hs_jack(struct platform_device *pdev,
 			struct msm8916_asoc_mach_data *pdata)
 {
 	struct pinctrl *pinctrl;
-	/*steve_chen ++*/
-	g_gpio_audio_debug = of_get_named_gpio(pdev->dev.of_node,"AUDIO_DEBUG",0);
-	if(g_gpio_audio_debug < 0){
-		pr_err("%s: property Audio Debug not found!\n",__func__);
-	}else{
-		pr_debug("%s: property Audio Debug = %d\n",__func__,g_gpio_audio_debug);
-	}
-	/*steve_chen --*/
 	pdata->us_euro_gpio = of_get_named_gpio(pdev->dev.of_node,
 					"qcom,cdc-us-euro-gpios", 0);
 	if (pdata->us_euro_gpio < 0) {

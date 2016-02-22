@@ -227,8 +227,6 @@
 				"msm-dai-q6-dev.32773", "msm-dai-q6-dev.32770";
 		asoc-codec = <&stub_codec>, <&pm8916_tombak_dig>;
 		asoc-codec-names = "msm-stub-codec.1", "tombak_codec";
-
-		AUDIO_DEBUG = <&msm_gpio 119 0x00>; /* steve_chen ++ */
 	};
 };
 
