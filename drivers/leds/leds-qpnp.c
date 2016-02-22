@@ -2187,6 +2187,20 @@ static int qpnp_pwm_init(struct pwm_config_data *pwm_cfg,
 	return 0;
 }
 
+static ssize_t pwm_us_show(struct device *dev, struct device_attribute *attr,char *buf)
+{
+	struct qpnp_led_data *led;
+	struct led_classdev *led_cdev = dev_get_drvdata(dev);
+	struct pwm_config_data *pwm_cfg;
+	int tmp=0;
+
+	led = container_of(led_cdev, struct qpnp_led_data, cdev);
+	pwm_cfg = led->mpp_cfg->pwm_cfg;
+	tmp = pwm_cfg->pwm_period_us;
+
+	return snprintf(buf, PAGE_SIZE,"%d\n",tmp);
+}
+
 static ssize_t pwm_us_store(struct device *dev,
 	struct device_attribute *attr,
 	const char *buf, size_t count)
@@ -2692,7 +2706,7 @@ static ssize_t blink_store(struct device *dev,
 
 static DEVICE_ATTR(led_mode, 0664, NULL, led_mode_store);
 static DEVICE_ATTR(strobe, 0664, NULL, led_strobe_type_store);
-static DEVICE_ATTR(pwm_us, 0664, NULL, pwm_us_store);
+static DEVICE_ATTR(pwm_us, 0664, pwm_us_show, pwm_us_store);
 static DEVICE_ATTR(pause_lo, 0664, NULL, pause_lo_store);
 static DEVICE_ATTR(pause_hi, 0664, NULL, pause_hi_store);
 static DEVICE_ATTR(start_idx, 0664, NULL, start_idx_store);
